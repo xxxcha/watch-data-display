@@ -1,0 +1,152 @@
+{% extends "layouts/base.html" %}
+{% load watch_extra %}
+{% block title %} List {% endblock %} 
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <div class="page-header">
+            <div class="page-block">
+                <!-- Title -->
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Watch Devices List</h5>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <br>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <!-- [ basic-table ] start -->
+                    <div class="col-xl-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Total {{count_total}} watches</h5>
+                            </div>
+                        
+
+                            <div class="card-block ">
+                                <div class='row'>
+                                    <!-- Sort by -->
+                                    <div class="col-6">
+                                        <b>Sort By: </b>
+                                        <a href="{% url 'watch_list' %}?search={{search}}&orderby=id">Id</a>  | 
+                                        <a href="{% url 'watch_list' %}?search={{ search }}&orderby=name">Name</a> |  
+
+                                    </div>
+                                     <!-- Search box -->
+                                    <div class="col-6">
+                                        <form class="form-inline mb-2">
+                                            <div class="form-group mx-sm-3 mb-2">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       name="search",
+                                                       id='search',
+                                                       placeholder="Search watch",
+                                                       value={{search}}
+                                                       >
+                                            </div>
+                                            <button type="submit" class="btn btn-secondary mb-2 btn-sm">Search</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive table-hover">
+                                    <!-- Table -->
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Mac Address</th>
+                                                <th>Operation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            
+                                            {% for watch in watch_list %}
+                                            <tr>
+                                                <th scope="row">{{watch.id}}</th>
+                                                <td>{{watch.name}}</td>
+                                                <td>{{watch.mac}}</td>
+                                                <td>
+                                                    <a href="{% url 'watch_delete' watch.id%}" class="badge badge-danger"><i class="feather icon-trash-2"></i>&nbsp;Delete</a>&nbsp;
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="row">
+                                    <div class='col-4'>
+                                        <a href="{% url 'watch_create' %}" class='btn btn-primary'>Add Watch Device</a>
+                                    </div>
+                                    <div class='col-8'>                                    
+                                        <ul class="pagination">
+
+                                            {% if page_objects.has_previous %} 
+                                                <li class="page-item "><a class="page-link" href="?{% param_replace page=page_objects.previous_page_number %}">&laquo;</a></li>
+                                            {% else %}
+                                                <li class="page-item disabled"><a href=""><span class="page-link">&laquo;</span></a></li>
+                                            {% endif %}
+
+                                            {% if page_objects.number|add:'-4' > 1 %}
+                                                <li class ="page-item"><a class="page-link" href="?{% param_replace page=page_pbjects.number|add:'-5' %}">&hellip;</a></li>
+                                            {% endif %}
+                                                
+                                                
+                                            {% for i in page_objects.paginator.page_range %}
+                                                {% if page_objects.number == i %}
+                                                        <li class="page-item active"><a class="page-link" href=""> {{i}}</a></li>
+                                                {% elif i > page_objects.number|add:'-5' and i < page_objects.number|add:'5' %}
+                                                    <li class ="page-item" ><a class="page-link" href="?{% param_replace page=i %}">{{ i }}</a></li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        
+                                            {% if page_objects.paginator.num_pages > page_objects.number|add:'4' %}
+                                                <li class ="page-item"><a class="page-link" href="?{% param_replace page=page_objects.number|add:'5' %}">&hellip;</a></li>
+                                            {% endif %}                                                   
+
+                                            {% if page_objects.has_next %}
+                                                <li class ="page-item" ><a class="page-link" href="?{% param_replace page=page_objects.paginator.num_pages %}">&raquo;</a></li>
+                                            {% else %}
+                                                <li class="page-item disabled"><a href=""><span class="page-link">&raquo;</span></a></li>
+                                            {% endif %}
+                            
+                                            
+                                        </ul>
+                                
+                                    </div>
+
+                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- [ Main Content ] end -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

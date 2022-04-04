@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="pcoded-content">
+        <div class="pcoded-inner-content">
+
+            <div class="main-body">
+                <br>                
+                <div class="page-wrapper">
+                    <div class="row">
+                        <!--  Count Books  -->
+                        <div class='col-md-3'>
+                            <div class="card">
+                                <div class="card-block">
+                                    <div class="row d-flex align-items-center">
+                                        <div class="col-auto">
+                                            <i class="fas fa-clock f-40 text-c-blue "></i>
+                                        </div>
+                                        <div class="col">
+                                            <h3 class="f-w-300">{{watch_count}}</h3>
+                                            <span class="d-block text-uppercase">TOTAL WATCHES</span>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  Count Books  -->
+                        <div class='col-md-3'>
+                            <div class="card">
+                                <div class="card-block">
+                                    <div class="row d-flex align-items-center">
+                                        <div class="col-auto">
+                                            <i class="fas fa-sort-amount-up f-40 text-c-blue "></i>
+                                        </div>
+                                        <div class="col">
+                                            <h3 class="f-w-300">{{all_count}}</h3>
+                                            <span class="d-block text-uppercase">TOTAL </br>ITEMS</span>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Count Members -->
+                        <div class='col-md-3'>
+                        <div class="card">
+                            <div class="card-block">
+                                <div class="row d-flex align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-signal f-40 text-c-red"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h3 class="f-w-300">{{data_count.ppg}}</h3>
+                                        <span class="d-block text-uppercase">TOTAL</br> PPG</br> ITEMS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <!-- Count Categories -->
+                        <div class='col-md-3'>
+                        <div class="card">
+                            <div class="card-block">
+                                <div class="row d-flex align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-heartbeat f-40 text-c-red"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h3 class="f-w-300">{{data_count.ecg}}</h3>
+                                        <span class="d-block text-uppercase">TOTAL </br>ECG</br>ITEMS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <!-- Count Categories -->
+                        <div class='col-md-3'>
+                        <div class="card">
+                            <div class="card-block">
+                                <div class="row d-flex align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-cubes f-40 text-c-purple"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h3 class="f-w-300">{{data_count.ecg}}</h3>
+                                        <span class="d-block text-uppercase">TOTAL </br>GSENSOR</br> ITEMS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <div class='col-md-3'>
+                        <div class="card">
+                            <div class="card-block">
+                                <div class="row d-flex align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-moon f-40 text-c-purple"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h3 class="f-w-300">{{data_count.sleep}}</h3>
+                                        <span class="d-block text-uppercase">TOTAL</br> SLEEP</br> ITEMS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}
