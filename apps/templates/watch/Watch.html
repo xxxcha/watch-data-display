@@ -40,12 +40,11 @@
 
                             <div class="card-block ">
                                 <div class='row'>
-                                    <!-- Sort by -->
                                     <div class="col-6">
-                                        <b>Sort By: </b>
+                                        <b>Sort By:</b>
                                         <a href="{% url 'watch_list' %}?search={{search}}&orderby=id">Id</a>  | 
                                         <a href="{% url 'watch_list' %}?search={{ search }}&orderby=name">Name</a> |  
-
+                                
                                     </div>
                                      <!-- Search box -->
                                     <div class="col-6">
@@ -75,15 +74,14 @@
                                                 <th>Operation</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            
+                                        <tbody>                    
                                             {% for watch in watch_list %}
                                             <tr>
                                                 <th scope="row">{{watch.id}}</th>
                                                 <td>{{watch.name}}</td>
                                                 <td>{{watch.mac}}</td>
                                                 <td>
-                                                    <a href="{% url 'watch_delete' watch.id%}" class="badge badge-danger"><i class="feather icon-trash-2"></i>&nbsp;Delete</a>&nbsp;
+                                                    <a href="{% url 'watch_delete' watch.id %}" class="badge badge-danger"><i class="feather icon-trash-2"></i>&nbsp;Delete</a>&nbsp;
                                                 </td>
                                             </tr>
                                             {% endfor %}

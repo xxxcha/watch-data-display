@@ -1,5 +1,6 @@
 # Watch-Data-Display
 
+<<<<<<< Updated upstream
 Here is a wonderful watch data display platform!
 
 
@@ -20,6 +21,11 @@ $ docker-compose up --build
 
 Visit `http://localhost:85` in your browser. The app should be up & running.
 
+=======
+Here is a wonderful watch data display platform! It is a website written based on Django Framework, with bootstrap toolkit.
+
+![Kapture 2022-04-05 at 12.47.25](/private/var/folders/60/wr82n1b57pl5wlqjqh6c3nqm0000gn/T/eb1f90cc4d07c7bff975f041f3b79401/Kapture 2022-04-05 at 12.47.25.gif)
+>>>>>>> Stashed changes
 
 ## ✨ How to use it
 
@@ -37,7 +43,7 @@ $ # virtualenv env
 $ # .\env\Scripts\activate
 $
 $ # Install modules
-$ # SQLIte version
+$
 $ pip3 install -r requirements.txt
 $
 $ # Create tables
@@ -55,7 +61,10 @@ $ # Access the web app in browser: http://127.0.0.1:8000/
 
 > Note: To use the app, please access the registration page and **create a new user**. After authentication, the app will unlock the private pages.
 
+<<<<<<< Updated upstream
 <br />
+=======
+>>>>>>> Stashed changes
 
 
 ## ✨ Credits & Links
