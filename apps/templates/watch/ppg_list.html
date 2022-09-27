@@ -29,38 +29,58 @@
                     <div class="col-xl-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Total {{count_total}} items</h5>                        
+                                <h5>Total {{count_total}} records</h5>                        
                             </div>
-
 
                             <div class="card-block">
                                 <div class='row'>
+                                    <!-- Dropdown list -->
                                     <div class="col-6">
-                                        <b>Sort By:</b>
-                                        <a href="{% url 'ppg_list' %}?search={{search}}&orderby=id">Id</a>  | 
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=watch">Watch</a> |  
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=green">Green</a> | 
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=red">Red</a> |
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=ir">IR</a> |
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=freq">Frequency</a> |
-                                        <a href="{% url 'ppg_list' %}?search={{ search }}&orderby=-created">Created at</a> |
-                                    </div>
-                                    <div class="col-6">
-                                        <form class="form-inline mb-2">
-                                            <div class="form-group mx-sm-3 mb-2">
-                                                <input type="text" 
-                                                       class="form-control" 
-                                                       name="search",
-                                                       id='search',
-                                                       placeholder="Search watch",
-                                                       value={{search}}
-                                                >
-                                            </div>
-                                            <button type="submit" class="btn btn-secondary mb-2 btn-sm">Search</button>
-                                        </form>
-                                    </div> 
-   
+                                        <div class="btn-group ">
+                                            {% if watch_name == '' %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select
+                                                Watch </button>
+                                            {% else %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">Watch {{watch_name}} </button>
 
+                                            {% endif %}
+
+                                            <div class="dropdown-menu">
+                                                {% for watch in watch_list %}
+                                                <a class="dropdown-item"
+                                                    href="{% url 'ppg_list' %}?watch_name={{watch}}">Watch {{watch}}</a>
+
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <div class="btn-group ">
+                                            {% if ppg_index == '' %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select
+                                                Test Index </button>
+                                            {% else %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">Test {{ppg_index}} </button>
+
+                                            {% endif %}
+
+                                            <div class="dropdown-menu">
+                                                {% for index in index_list %}
+                                                <a class="dropdown-item"
+                                                    href="{% url 'ppg_list' %}?watch_name={{watch_name}}&ppg_index={{index}}">Test {{index}}</a>
+
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+   
                                 </div>
 
                                 <div class="table-responsive ">
@@ -73,6 +93,7 @@
                                                 <th>Red</th>
                                                 <th>IR</th>
                                                 <th>Frequency</th>
+                                                <th>Index</th>
                                                 <th>Created at</th>
                                                 <th>Operation</th>
                                             </tr>
@@ -87,7 +108,8 @@
                                                 <td>{{ppg.red}}</td>
                                                 <td>{{ppg.ir}}</td>
                                                 <td>{{ppg.freq}}</td>
-                                                <td>{{ppg.created|date:"Y-m-d H:i" }}  </td>
+                                                <td>{{ppg.index}}</td>
+                                                <td>{{ppg.created|date:"Y-m-d H:m:s" }}  </td>
                                                 <td>                                
                                                     <a href="{% url 'ppg_delete' ppg.id%}" class="badge badge-danger"><i class="feather icon-trash-2"></i>&nbsp;Delete</a>&nbsp;
                                                 </td>
@@ -107,7 +129,7 @@
                                         <ul class="pagination">
 
                                             {% if page_objects.has_previous %} 
-                                                <li class="page-item "><a class="page-link" href="?{% param_replace page=page_objects.previous_page_number %}">&laquo;</a></li>
+                                                <li class="page-item "><a class="page-link" href="?{% param_replace page=1 %}">&laquo;</a></li>
                                             {% else %}
                                                 <li class="page-item disabled"><a href=""><span class="page-link">&laquo;</span></a></li>
                                             {% endif %}

@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': 'watch',   
         'USER': 'root',    
         'PASSWORD': '123456',   
-        'HOST': '192.168.0.103',  
+        'HOST': '192.168.1.157',  
         'PORT': '3306', 
     }
 }

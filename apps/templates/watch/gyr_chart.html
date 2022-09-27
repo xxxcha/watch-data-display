@@ -1,0 +1,171 @@
+{% extends "layouts/base.html" %}
+{% load watch_extra %}
+{% block title %} Data {% endblock %} 
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+    
+    <link rel="stylesheet" href="/static/assets/plugins/chart-morris/css/morris.css">
+
+{% block content %}
+
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">GYR Data Curve</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <!-- [ basic-table ] start -->
+                    <div class="col-xl-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Watch {{watch_name}}  Test {{gyr_index}}</h5>
+                            </div>
+                            <div class="card-block ">
+                                <div class='row'>
+
+                                    <!-- Dropdown list -->
+                                    <div class="col-6">
+                                        <div class="btn-group ">
+                                            {% if watch_name == '' %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select
+                                                Watch </button>
+                                            {% else %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">Watch {{watch_name}} </button>
+
+                                            {% endif %}
+
+                                            <div class="dropdown-menu">
+                                                {% for watch in watch_list %}
+                                                <a class="dropdown-item"
+                                                    href="{% url 'gyr_chart' %}?watch_name={{watch}}">Watch {{watch}}</a>
+
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <div class="btn-group ">
+                                            {% if gyr_index == '' %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select
+                                                Test Index </button>
+                                            {% else %}
+                                            <button class="btn btn-light dropdown-toggle" type="button"
+                                                data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">Test {{gyr_index}} </button>
+
+                                            {% endif %}
+
+                                            <div class="dropdown-menu">
+                                                {% for index in index_list %}
+                                                <a class="dropdown-item"
+                                                    href="{% url 'gyr_chart' %}?watch_name={{watch_name}}&gyr_index={{index}}">Test {{index}}</a>
+
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> 
+
+                                <figure class="highcharts-figure">
+                                    <div id="gyr" style="height:500px"></div>
+                                </figure>
+
+                                <div class="row">
+                                    <div class='col-4'>
+                                        <a href="{% url 'gyr_list' %}" class='btn btn-primary'>GYR Data List</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+      
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"> </script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/exporting.js"> </script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/export-data.js"></script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/accessibility.js"></script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/cylinder.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/highcharts-3d.js"></script>
+
+<script type="text/javascript">
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
+    Highcharts.chart('gyr', {
+        chart: {
+            type: 'spline',
+            zoomType: 'x'
+        },
+        title: {
+            text: 'GYR curve during the test'
+        },
+        subtitle:{
+            text: 'Test started at ' + Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', {{gyr_time}})
+        },
+        xAxis: {
+            tickInterval: 0.2,
+            title:{
+                text: 'Time(s)'
+            },
+            type:'linear',  
+        },
+        plotOptions: {
+            spline: {
+                lineWidth: 4,
+                states: {
+                    hover: {
+                        lineWidth: 5
+                    }
+                },
+                marker: {
+                    enabled: false
+                },
+            }
+        },
+        series: [{
+            name: 'x',
+            data: {{data.x}},
+        },
+        {
+            name: 'y',
+            data: {{data.y}},
+        },
+        {
+            name: 'z',
+            data: {{data.z}},
+        }] 
+    });
+</script>
+
+{% endblock javascripts %}

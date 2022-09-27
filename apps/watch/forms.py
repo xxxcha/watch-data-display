@@ -1,5 +1,5 @@
 from django import forms
-from .models import Watch,PPG,ECG,Gsensor,Sleep
+from .models import Watch,PPG,ECG,ACC,GYR
 from django.contrib import admin
 from django.urls import reverse
 
@@ -34,40 +34,31 @@ class ECGCreateForm(forms.ModelForm):
                   'mv',
                   'freq')
         labels={
+            'ecg': "ECG Value",
+            'mv': "MV Value",
             'freq':"Frequency"
         }
 
-class GsensorCreateForm(forms.ModelForm):
+class ACCCreateForm(forms.ModelForm):
     class Meta:
-        model = Gsensor
+        model = ACC
         fields = ('watch',
-                  'acc_x',
-                  'acc_y',
-                  'acc_z', 
-                  'gyr_x',
-                  'gyr_y',
-                  'gyr_z',
-                  'mag_x',
-                  'mag_y',
-                  'mag_z',
+                  'x',
+                  'y',
+                  'z', 
                   'freq')
         labels={
             'freq':"Frequency"
         }
 
-class SleepCreateForm(forms.ModelForm):
+class GYRCreateForm(forms.ModelForm):
     class Meta:
-        model = Sleep
+        model = GYR
         fields = ('watch',
-                  'green',
-                  'red',
-                  'ir', 
                   'x',
                   'y',
                   'z',
-                  'sleep_index',
                   'freq')
         labels={
-            'sleep_index':"Sleep Index",
             'freq':"Frequency"
         }

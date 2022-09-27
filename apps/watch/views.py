@@ -16,12 +16,12 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.db.models import Sum, Count
 from datetime import date,timedelta,datetime
-from .models import Watch, PPG, ECG, Gsensor, Sleep
-from django.contrib.messages.views import messages
-from .forms import WatchCreateForm,PPGCreateForm,ECGCreateForm,GsensorCreateForm,SleepCreateForm
+import time
+from .models import Watch, PPG, ECG, ACC, GYR
+from .forms import WatchCreateForm,PPGCreateForm,ECGCreateForm,ACCCreateForm,GYRCreateForm
 
 
-PAGINATOR_NUMBER = 5
+PAGINATOR_NUMBER = 10
 
 class HomeView(LoginRequiredMixin,TemplateView):
     login_url = 'login'
@@ -34,9 +34,9 @@ class HomeView(LoginRequiredMixin,TemplateView):
         
         data_count = {"ppg":PPG.objects.all().count(),
                     "ecg":ECG.objects.all().count(),
-                    "gsensor":Gsensor.objects.all().count(),
-                    "sleep":Sleep.objects.all().count()}
-        all_count=data_count['ppg']+data_count['ecg']+data_count['gsensor']+data_count['sleep']       
+                    "acc":ACC.objects.all().count(),
+                    "gyr":GYR.objects.all().count()}
+        all_count=data_count['ppg']+data_count['ecg']+data_count['acc']+data_count['gyr']       
         
         current_week = date.today().isocalendar()[1]
         
@@ -50,7 +50,7 @@ class WatchListView(LoginRequiredMixin,ListView):
     login_url = 'login'
     model=Watch
     context_object_name = 'watch_list'
-    template_name = 'watch/Watch.html'
+    template_name = 'watch/watch_list.html'
     order_field = 'name'
     search_value=""
 
@@ -89,12 +89,11 @@ class WatchCreateView(LoginRequiredMixin,CreateView):
     model=Watch
     login_url = 'login'
     form_class=WatchCreateForm    
-    template_name='watch/Watch_create.html'
+    template_name='watch/watch_create.html'
 
     def post(self,request, *args, **kwargs):
         super(WatchCreateView,self).post(request)
         new_watch_name = request.POST['name']
-        messages.success(request, f"New watch << {new_watch_name} >> Added")
         return redirect('watch_list')
 
 class WatchDeleteView(LoginRequiredMixin,View):
@@ -103,33 +102,82 @@ class WatchDeleteView(LoginRequiredMixin,View):
         watch_pk=kwargs["pk"]
         delete_watch=Watch.objects.get(pk=watch_pk)
         #model_name = delete_watch.__class__.__name__
-        messages.error(request, f"Watch << {delete_watch.name} >> Removed")
         delete_watch.delete()
         
         return HttpResponseRedirect(reverse("watch_list"))
 
+class PPGChartView(LoginRequiredMixin,TemplateView):
+    template_name = "watch/ppg_chart.html"
+    login_url = 'login'
+    context={}
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+
+    def get(self, request, *args, **kwargs):        
+        watch_name = self.request.GET.get("watch_name")
+        ppg_index =self.request.GET.get("ppg_index") 
+
+        if not watch_name:
+            watch_name=Watch.objects.values('name')[0]['name']
+        
+        index_list=[x['index'] for x in PPG.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
+        if not ppg_index:
+            ppg_index=index_list[-1]
+
+        ppg_data = PPG.objects.filter(
+            Q(index=ppg_index)&Q(watch__name__exact=watch_name)
+        )
+         
+        ppg_time = PPG.objects.filter(index=ppg_index).order_by('created').values('created')[0]['created']
+        ppg_time = time.mktime(ppg_time.timetuple())*1000
+        
+        ppg_freq = PPG.objects.filter(index=ppg_index).values('freq')[0]['freq']
+
+        data={
+            'green': [[i/ppg_freq, ppg_data.values('green')[i]['green']] for i in range(len(ppg_data))],
+            'red': [[i/ppg_freq, ppg_data.values('red')[i]['red']] for i in range(len(ppg_data))],
+            'ir': [[i/ppg_freq, ppg_data.values('ir')[i]['ir']] for i in range(len(ppg_data))],        
+        }
+
+        self.context['watch_list']=self.watch_list
+        self.context['index_list']=index_list
+        self.context['watch_name']=watch_name
+        self.context['ppg_index']=ppg_index
+        self.context['ppg_time']=ppg_time
+        self.context['ppg_freq']=ppg_freq
+        self.context['data']=data
+
+        return render(request, self.template_name, self.context)
+
+
 class PPGListView(ListView):
     model=PPG
     context_object_name = 'ppg_list'
-    template_name = 'watch/PPG.html'
-    order_field = '-created'
-    search_value=""
+    template_name = 'watch/ppg_list.html'
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+    watch_name=''
+    ppg_index=''
+    index_list=[]
 
     def get_queryset(self):
-        search =self.request.GET.get("search") 
-        order_by=self.request.GET.get("orderby")
+        watch_name = self.request.GET.get("watch_name")
+        ppg_index =self.request.GET.get("ppg_index") 
 
-        if order_by:
-            all_ppg = PPG.objects.all().order_by(order_by)
-            self.order_field=order_by
+        if watch_name:
+            all_ppg = PPG.objects.all().filter(watch__name__exact=watch_name)
+            self.watch_name=watch_name
+            self.index_list=[x['index'] for x in PPG.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
         else:
-            all_ppg = PPG.objects.all().order_by(self.order_field)
+            all_ppg = PPG.objects.all().order_by("-id")
 
-        if search:
-            all_ppg = all_ppg.filter(
-                Q(watch__name__icontains=search)
-            )
-            self.search_value=search
+        if ppg_index:
+            all_ppg = all_ppg.filter(index=ppg_index).order_by("-id")
+            self.ppg_index=ppg_index
+        else:
+            all_ppg = all_ppg.order_by("-id")
 
         self.count_total = all_ppg.count()
         paginator = Paginator(all_ppg, PAGINATOR_NUMBER)
@@ -140,9 +188,11 @@ class PPGListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(PPGListView, self).get_context_data(*args, **kwargs)
+        context['watch_list'] = self.watch_list
+        context['index_list'] = self.index_list
+        context['watch_name'] = self.watch_name
+        context['ppg_index'] = self.ppg_index
         context['count_total'] = self.count_total
-        context['search'] = self.search_value
-        context['orderby'] = self.order_field
         context['page_objects'] = self.get_queryset()
         return context
 
@@ -150,11 +200,10 @@ class PPGCreateView(LoginRequiredMixin,CreateView):
     model=PPG
     login_url = 'login'
     form_class=PPGCreateForm    
-    template_name='watch/PPG_create.html'
+    template_name='watch/ppg_create.html'
 
     def post(self,request, *args, **kwargs):
         super(PPGCreateView,self).post(request)
-        messages.success(request, f"This PPG Item Added")
         return redirect('ppg_list')
 
 class PPGDeleteView(LoginRequiredMixin,View):
@@ -162,46 +211,95 @@ class PPGDeleteView(LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
         ppg_pk=kwargs["pk"]
         delete_ppg=PPG.objects.get(pk=ppg_pk)       
-        messages.error(request, f"This PPG Item Removed")
         delete_ppg.delete()
         
         return HttpResponseRedirect(reverse("ppg_list"))
+
+class ECGChartView(LoginRequiredMixin,TemplateView):
+    template_name = "watch/ecg_chart.html"
+    login_url = 'login'
+    context={}
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+
+    def get(self, request, *args, **kwargs):        
+        watch_name = self.request.GET.get("watch_name")
+        ecg_index =self.request.GET.get("ecg_index") 
+
+        if not watch_name:
+            watch_name=Watch.objects.values('name')[0]['name']
+        
+        index_list=[x['index'] for x in ECG.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
+        if not ecg_index:
+            ecg_index=index_list[-1]
+
+        ecg_data = ECG.objects.filter(
+            Q(index=ecg_index)&Q(watch__name__exact=watch_name)
+        )
+         
+        ecg_time = ECG.objects.filter(index=ecg_index).order_by('created').values('created')[0]['created']
+        ecg_time = time.mktime(ecg_time.timetuple())*1000
+        
+        ecg_freq = ECG.objects.filter(index=ecg_index).values('freq')[0]['freq']
+
+        data={
+            'mv': [[i/ecg_freq, ecg_data.values('mv')[i]['mv']] for i in range(len(ecg_data))],      
+        }
+
+        self.context['watch_list']=self.watch_list
+        self.context['index_list']=index_list
+        self.context['watch_name']=watch_name
+        self.context['ecg_index']=ecg_index
+        self.context['ecg_time']=ecg_time
+        self.context['ecg_freq']=ecg_freq
+        self.context['data']=data
+
+        return render(request, self.template_name, self.context)
 
 
 class ECGListView(ListView):
     model=ECG
     context_object_name = 'ecg_list'
-    template_name = 'watch/ECG.html'
-    order_field = '-created'
-    search_value=""
+    template_name = 'watch/ecg_list.html'
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+    watch_name=''
+    ecg_index=''
+    index_list=[]
 
     def get_queryset(self):
-        search =self.request.GET.get("search") 
-        order_by=self.request.GET.get("orderby")
+        watch_name = self.request.GET.get("watch_name")
+        ecg_index =self.request.GET.get("ecg_index") 
 
-        if order_by:
-            all_ecg = ECG.objects.all().order_by(order_by)
-            self.order_field=order_by
+        if watch_name:
+            all_ecg = ECG.objects.all().filter(watch__name__exact=watch_name)
+            self.watch_name=watch_name
+            self.index_list=[x['index'] for x in ECG.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
         else:
-            all_ecg = ECG.objects.all().order_by(self.order_field)
+            all_ecg = ECG.objects.all().order_by("-id")
 
-        if search:
-            all_ecg = all_ecg.filter(
-                Q(watch__name__icontains=search)
-            )
-            self.search_value=search
+        if ecg_index:
+            all_ecg = all_ecg.filter(index=ecg_index).order_by("-id")
+            self.ecg_index=ecg_index
+        else:
+            all_ecg = all_ecg.order_by("-id")
 
         self.count_total = all_ecg.count()
         paginator = Paginator(all_ecg, PAGINATOR_NUMBER)
         page = self.request.GET.get('page')
         ecg = paginator.get_page(page)
+
         return ecg
 
     def get_context_data(self, *args, **kwargs):
         context = super(ECGListView, self).get_context_data(*args, **kwargs)
+        context['watch_list'] = self.watch_list
+        context['index_list'] = self.index_list
+        context['watch_name'] = self.watch_name
+        context['ecg_index'] = self.ecg_index
         context['count_total'] = self.count_total
-        context['search'] = self.search_value
-        context['orderby'] = self.order_field
         context['page_objects'] = self.get_queryset()
         return context
 
@@ -209,11 +307,10 @@ class ECGCreateView(LoginRequiredMixin,CreateView):
     model=ECG
     login_url = 'login'
     form_class=ECGCreateForm    
-    template_name='watch/ECG_create.html'
+    template_name='watch/ecg_create.html'
 
     def post(self,request, *args, **kwargs):
         super(ECGCreateView,self).post(request)
-        messages.success(request, f"This ECG Item Added")
         return redirect('ecg_list')
 
 class ECGDeleteView(LoginRequiredMixin,View):
@@ -221,124 +318,225 @@ class ECGDeleteView(LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
         ecg_pk=kwargs["pk"]
         delete_ecg=ECG.objects.get(pk=ecg_pk)       
-        messages.error(request, f"This ECG Item Removed")
         delete_ecg.delete()
         
         return HttpResponseRedirect(reverse("ecg_list"))
 
+class ACCChartView(LoginRequiredMixin,TemplateView):
+    template_name = "watch/acc_chart.html"
+    login_url = 'login'
+    context={}
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
 
-class GsensorListView(ListView):
-    model=Gsensor
-    context_object_name = 'gsensor_list'
-    template_name = 'watch/Gsensor.html'
-    order_field = '-created'
-    search_value=""
+    def get(self, request, *args, **kwargs):        
+        watch_name = self.request.GET.get("watch_name")
+        acc_index =self.request.GET.get("acc_index") 
+
+        if not watch_name:
+            watch_name=Watch.objects.values('name')[0]['name']
+        
+        index_list=[x['index'] for x in ACC.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
+        if not acc_index:
+            acc_index=index_list[-1]
+
+        acc_data = ACC.objects.filter(
+            Q(index=acc_index)&Q(watch__name__exact=watch_name)
+        )
+         
+        acc_time = ACC.objects.filter(index=acc_index).order_by('created').values('created')[0]['created']
+        acc_time = time.mktime(acc_time.timetuple())*1000
+        
+        acc_freq = ACC.objects.filter(index=acc_index).values('freq')[0]['freq']
+
+        data={
+            'x': [[i/acc_freq, acc_data.values('x')[i]['x']] for i in range(len(acc_data))],
+            'y': [[i/acc_freq, acc_data.values('y')[i]['y']] for i in range(len(acc_data))],
+            'z': [[i/acc_freq, acc_data.values('z')[i]['z']] for i in range(len(acc_data))]
+        }
+
+        self.context['watch_list']=self.watch_list
+        self.context['index_list']=index_list
+        self.context['watch_name']=watch_name
+        self.context['acc_index']=acc_index
+        self.context['acc_time']=acc_time
+        self.context['acc_freq']=acc_freq
+        self.context['data']=data
+
+        return render(request, self.template_name, self.context)
+
+class ACCListView(ListView):
+    model=ACC
+    context_object_name = 'acc_list'
+    template_name = 'watch/acc_list.html'
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+    watch_name=''
+    acc_index=''
+    index_list=[]
 
     def get_queryset(self):
-        search =self.request.GET.get("search") 
-        order_by=self.request.GET.get("orderby")
+        watch_name = self.request.GET.get("watch_name")
+        acc_index =self.request.GET.get("acc_index") 
 
-        if order_by:
-            all_gsensor = Gsensor.objects.all().order_by(order_by)
-            self.order_field=order_by
+        if watch_name:
+            all_acc = ACC.objects.all().filter(watch__name__exact=watch_name)
+            self.watch_name=watch_name
+            self.index_list=[x['index'] for x in ACC.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
         else:
-            all_gsensor = Gsensor.objects.all().order_by(self.order_field)
+            all_acc = ACC.objects.all().order_by("-id")
 
-        if search:
-            all_gsensor = all_gsensor.filter(
-                Q(watch__name__icontains=search)
-            )
-            self.search_value=search
+        if acc_index:
+            all_acc = all_acc.filter(index=acc_index).order_by("-id")
+            self.acc_index=acc_index
+        else:
+            all_acc = all_acc.order_by("-id")
 
-        self.count_total = all_gsensor.count()
-        paginator = Paginator(all_gsensor, PAGINATOR_NUMBER)
+        self.count_total = all_acc.count()
+        paginator = Paginator(all_acc, PAGINATOR_NUMBER)
         page = self.request.GET.get('page')
-        gsensor = paginator.get_page(page)
-        return gsensor
+        acc = paginator.get_page(page)
+
+        return acc
 
     def get_context_data(self, *args, **kwargs):
-        context = super(GsensorListView, self).get_context_data(*args, **kwargs)
+        context = super(ACCListView, self).get_context_data(*args, **kwargs)
+        context['watch_list'] = self.watch_list
+        context['index_list'] = self.index_list
+        context['watch_name'] = self.watch_name
+        context['acc_index'] = self.acc_index
         context['count_total'] = self.count_total
-        context['search'] = self.search_value
-        context['orderby'] = self.order_field
         context['page_objects'] = self.get_queryset()
         return context
 
-class GsensorCreateView(LoginRequiredMixin,CreateView):
-    model=Gsensor
+class ACCCreateView(LoginRequiredMixin,CreateView):
+    model=ACC
     login_url = 'login'
-    form_class=GsensorCreateForm    
-    template_name='watch/Gsensor_create.html'
+    form_class=ACCCreateForm    
+    template_name='watch/acc_create.html'
 
     def post(self,request, *args, **kwargs):
-        super(GsensorCreateView,self).post(request)
-        messages.success(request, f"This Gsensor Item Added")
-        return redirect('gsensor_list')
+        super(ACCCreateView,self).post(request)
+        return redirect('acc_list')
 
-class GsensorDeleteView(LoginRequiredMixin,View):
+class ACCDeleteView(LoginRequiredMixin,View):
     login_url = 'login'
     def get(self,request,*args,**kwargs):
-        gsensor_pk=kwargs["pk"]
-        delete_gsensor=Gsensor.objects.get(pk=gsensor_pk)       
-        messages.error(request, f"This Gsensor Item Removed")
-        delete_gsensor.delete()
+        acc_pk=kwargs["pk"]
+        delete_acc=ACC.objects.get(pk=acc_pk)       
+        delete_acc.delete()
         
-        return HttpResponseRedirect(reverse("gsensor_list"))
+        return HttpResponseRedirect(reverse("acc_list"))
 
-class SleepListView(ListView):
-    model=Sleep
-    context_object_name = 'sleep_list'
-    template_name = 'watch/Sleep.html'
-    order_field = '-created'
-    search_value=""
+class GYRChartView(LoginRequiredMixin,TemplateView):
+    template_name = "watch/gyr_chart.html"
+    login_url = 'login'
+    context={}
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+
+    def get(self, request, *args, **kwargs):        
+        watch_name = self.request.GET.get("watch_name")
+        gyr_index =self.request.GET.get("gyr_index") 
+
+        if not watch_name:
+            watch_name=Watch.objects.values('name')[0]['name']
+        
+        index_list=[x['index'] for x in GYR.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
+        if not gyr_index:
+            gyr_index=index_list[-1]
+
+        gyr_data = GYR.objects.filter(
+            Q(index=gyr_index)&Q(watch__name__exact=watch_name)
+        )
+         
+        gyr_time = GYR.objects.filter(index=gyr_index).order_by('created').values('created')[0]['created']
+        gyr_time = time.mktime(gyr_time.timetuple())*1000
+        
+        gyr_freq = GYR.objects.filter(index=gyr_index).values('freq')[0]['freq']
+
+        data={
+            'x': [[i/gyr_freq, gyr_data.values('x')[i]['x']] for i in range(len(gyr_data))],
+            'y': [[i/gyr_freq, gyr_data.values('y')[i]['y']] for i in range(len(gyr_data))],
+            'z': [[i/gyr_freq, gyr_data.values('z')[i]['z']] for i in range(len(gyr_data))]
+        }
+        print(gyr_time,gyr_freq,data)
+        self.context['watch_list']=self.watch_list
+        self.context['index_list']=index_list
+        self.context['watch_name']=watch_name
+        self.context['gyr_index']=gyr_index
+        self.context['gyr_time']=gyr_time
+        self.context['gyr_freq']=gyr_freq
+        self.context['data']=data
+
+        return render(request, self.template_name, self.context)
+
+class GYRListView(ListView):
+    model=GYR
+    context_object_name = 'gyr_list'
+    template_name = 'watch/gyr_list.html'
+    all_watches = Watch.objects.values()
+    watch_list = [x['name'] for x in all_watches]
+    watch_name=''
+    gyr_index=''
+    index_list=[]
 
     def get_queryset(self):
-        search =self.request.GET.get("search") 
-        order_by=self.request.GET.get("orderby")
+        watch_name = self.request.GET.get("watch_name")
+        gyr_index =self.request.GET.get("gyr_index") 
 
-        if order_by:
-            all_sleep = Sleep.objects.all().order_by(order_by)
-            self.order_field=order_by
+        if watch_name:
+            all_gyr = GYR.objects.all().filter(watch__name__exact=watch_name)
+            self.watch_name=watch_name
+            self.index_list=[x['index'] for x in GYR.objects.filter(watch__name__exact=watch_name).values('index').distinct()]
+
         else:
-            all_sleep = Sleep.objects.all().order_by(self.order_field)
+            all_gyr = GYR.objects.all().order_by("-id")
 
-        if search:
-            all_sleep = all_sleep.filter(
-                Q(watch__name__icontains=search)
-            )
-            self.search_value=search
+        if gyr_index:
+            all_gyr = all_gyr.filter(index=gyr_index).order_by("-id")
+            self.gyr_index=gyr_index
+        else:
+            all_gyr = all_gyr.order_by("-id")
 
-        self.count_total = all_sleep.count()
-        paginator = Paginator(all_sleep, PAGINATOR_NUMBER)
+        self.count_total = all_gyr.count()
+        paginator = Paginator(all_gyr, PAGINATOR_NUMBER)
         page = self.request.GET.get('page')
-        sleep = paginator.get_page(page)
-        return sleep
+        gyr = paginator.get_page(page)
+
+        return gyr
 
     def get_context_data(self, *args, **kwargs):
-        context = super(SleepListView, self).get_context_data(*args, **kwargs)
+        context = super(GYRListView, self).get_context_data(*args, **kwargs)
+        context['watch_list'] = self.watch_list
+        context['index_list'] = self.index_list
+        context['watch_name'] = self.watch_name
+        context['gyr_index'] = self.gyr_index
         context['count_total'] = self.count_total
-        context['search'] = self.search_value
-        context['orderby'] = self.order_field
         context['page_objects'] = self.get_queryset()
         return context
 
-class SleepCreateView(LoginRequiredMixin,CreateView):
-    model=Sleep
+class GYRCreateView(LoginRequiredMixin,CreateView):
+    model=GYR
     login_url = 'login'
-    form_class=SleepCreateForm    
-    template_name='watch/Sleep_create.html'
+    form_class=GYRCreateForm    
+    template_name='watch/gyr_create.html'
 
     def post(self,request, *args, **kwargs):
-        super(SleepCreateView,self).post(request)
-        messages.success(request, f"This Sleep Item Added")
-        return redirect('sleep_list')
+        super(GYRCreateView,self).post(request)
+        return redirect('gyr_list')
 
-class SleepDeleteView(LoginRequiredMixin,View):
+class GYRDeleteView(LoginRequiredMixin,View):
     login_url = 'login'
     def get(self,request,*args,**kwargs):
-        sleep_pk=kwargs["pk"]
-        delete_sleep=Sleep.objects.get(pk=sleep_pk)       
-        messages.error(request, f"This Sleep Item Removed")
-        delete_sleep.delete()
+        gyr_pk=kwargs["pk"]
+        delete_gyr=GYR.objects.get(pk=gyr_pk)       
+        delete_gyr.delete()
         
-        return HttpResponseRedirect(reverse("sleep_list"))
+        return HttpResponseRedirect(reverse("gyr_list"))
+
+
+

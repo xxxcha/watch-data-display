@@ -1,0 +1,236 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Charts {% endblock %} 
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+    <link rel="stylesheet" href="/static/assets/plugins/chart-morris/css/morris.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <!-- <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Morris Chart</h5>
+                        </div>
+
+                    </div> -->
+                </div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <!-- [ Morris Chart ] start -->
+                    <div class="col-xl-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>PPG Data Curve</h5>
+                            </div>
+                            <div class="card-block" >
+                                <figure class="highcharts-figure">
+                                    <div id="ppg" style="height:400px"></div>
+                                </figure>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>ECG Data Curve</h5>
+                            </div>
+                            <div class="card-block">
+                                <figure class="highcharts-figure">
+                                <div id="ecg" style="height:400px"></div>
+                                </figure>
+
+                            </div> 
+                        </div>
+                    </div>
+      
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"> </script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/exporting.js"> </script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/export-data.js"></script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/accessibility.js"></script> 
+<script type="text/javascript" src="https://code.highcharts.com/modules/cylinder.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/highcharts-3d.js"></script>
+{% comment %} <script type="text/javascript">
+    Highcharts.chart('ecg', {
+        chart: {
+            type: 'spline'
+        },
+        title: {
+            text: 'Historic World Population by Region'
+        },
+        subtitle:{
+            text: {{freq.ppg}}
+        },
+        xAxis: {
+            tickInterval: 1000,
+            type:'datetime',
+            dateTimeLabelFormats: {
+                second: '%Y-%m-%d %H:%M:%S'
+            }     
+        },
+        plotOptions: {
+            spline: {
+                lineWidth: 4,
+                states: {
+                    hover: {
+                        lineWidth: 5
+                    }
+                },
+                marker: {
+                    enabled: false
+                },
+                pointInterval: 1000, // one hour
+                pointStart: Date.UTC(2009, 9, 6, 0, 0, 0)
+            }
+        },
+        tooltip: {
+            shared: true,
+            dateTimeLabelFormats: {
+                day: '%Y-%m-%d %H:%M:%S'
+            }
+        },
+        series: [{
+            name: 'Year 1800',
+            data: [1800,1820,1908,1980]
+        }, {
+            name: 'Year 1900',
+            data: [1000,1020,1900,1990]
+        }, {
+            name: 'Year 2012',
+            data: [2000,2020,1910,2090]
+        }]
+    });
+</script>  {% endcomment %}
+<script type="text/javascript">
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
+    Highcharts.chart('ecg', {
+        chart: {
+            type: 'spline',
+            zoomType: 'x'
+        },
+        title: {
+            text: 'ECG curve of test '+{{ecg_index}}
+        },
+        subtitle:{
+            text: 'Monitoring started at ' + Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', {{start_time.ecg}})
+        },
+        xAxis: {
+            tickInterval: 0.2,
+            title:{
+                text: 'Time(s)'
+            },
+            type:'linear',  
+        },
+        plotOptions: {
+            spline: {
+                lineWidth: 4,
+                states: {
+                    hover: {
+                        lineWidth: 5
+                    }
+                },
+                marker: {
+                    enabled: false
+                },
+            }
+        },
+        series: [{
+            name: 'mv',
+            data: {{data.mv}}
+        }]
+    });
+</script>
+{% comment %} <script type="text/javascript">  
+    Highcharts.Chart('ppg',{
+        chart: {
+            type: 'spline',
+            zoomType: 'x',
+        },
+        title: {
+            text: 'Last monitored PPG data curve'
+        },
+        subtitle: {
+            text: 'Monitoring started at '+{{start_time.ppg|safe}},
+        },
+        xAxis: {
+            type: "linear",
+            title: {text: "Time(s)  Frequency: "+{{freq.ppg|safe}}+"Hz"},        
+        }, 
+        yAxis: {title: {text: 'PPG signal'}},
+        series: [{
+            type: 'spline',
+            name: 'green',
+            color: '#1de9b6'
+            data: {{data.green|safe}},
+        },
+        {
+            type: 'spline',
+            name: 'red',
+            color: '#f44236'
+            data: {{data.red|safe}},
+        },
+        {
+            type: 'spline',
+            name: 'ir',
+            color: '#f4c22b'
+            data: {{data.ir|safe}},
+        }] 
+    });
+</script> {% endcomment %}
+{% comment %}   new Highcharts.Chart({
+    chart: {
+        renderTo: 'ecg',
+        type: 'spline',
+        zoomType: 'x',
+    },
+    title: {
+        text: 'Last monitored PPG data curve'
+    },
+    subtitle: {
+        text: 'Monitoring started at '+{{start_time.ecg|safe}},
+    },
+    xAxis: {
+        type: "linear",
+        title: {text: "Time(s)  Frequency: "+{{freq.ecg|safe}}+"Hz"},        
+    }, 
+    yAxis: {title: {text: 'ECG signal'}},
+    series: [{
+        type: 'spline',
+        name: 'mv',
+        color: '#ff0000'
+        data: {{data.mv|safe}},
+    }]
+  }); {% endcomment %}
+
+
+
+{% endblock javascripts %}
